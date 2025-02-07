@@ -16,7 +16,7 @@ export default {
 </template>
 
 <style>
-#app{
+#app {
   display: flex;
   justify-content: center;
   align-items: center;

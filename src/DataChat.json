@@ -1,0 +1,38 @@
+{
+    "firstMessage": [
+        {
+            "username": "Chrystian",
+            "avatar": "/public/avatars/image-maxblagun.png",
+            "date": "Now",
+            "message": "Hola, cómo estás?"
+        },
+        {
+            "username": "Miller",
+            "avatar": "/public/avatars/image-ramsesmiron.png",
+            "date": "Now",
+            "message": "Holisssss"
+        }
+    ],
+    "secondMessage": [
+        {
+            "username": "Miller",
+            "avatar": "/public/avatars/image-ramsesmiron.png",
+            "date": "Now",
+            "message": "Ya tienen claro que hacer hoy?"
+        },
+        {
+            "username": "Chrystian",
+            "avatar": "/public/avatars/image-maxblagun.png",
+            "date": "Now",
+            "message": "No jajaj"
+        }
+    ],
+    "thirdMessage": [
+        {
+            "username": "Miller",
+            "avatar": "/public/avatars/image-ramsesmiron.png",
+            "date": "Now",
+            "message": "Vale, ya les comparto lo que tienen que hacer"
+        }
+    ]
+}

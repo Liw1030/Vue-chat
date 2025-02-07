@@ -5,40 +5,75 @@ export default {
             newMessage: '',
             editMessageText: '',
             editingIndex: -1,
-            messages: []
+            messages: [],
+            firstMessage: [],
+            secondMessage: [],
+            thirdMessage: [],
+            firstResponseTriggered: false,
+            secondResponseTriggered: false,
+            thirdResponseTriggered: false
         };
     },
-    mounted() {
-        this.loadMessages();
+    async mounted() {
+        await this.loadMessages();
     },
     methods: {
+        async loadMessages() {
+            const savedMessages = localStorage.getItem('chatMessages');
+            if (savedMessages) {
+                this.messages = JSON.parse(savedMessages);
+            } 
+            const response = await fetch('../src/DataChat.json');
+            const data = await response.json();
+            this.firstMessage = data.firstMessage;
+            this.secondMessage = data.secondMessage;
+            this.thirdMessage = data.thirdMessage;
+        },
         sendMessage() {
             if (this.newMessage.trim() !== '') {
-                this.messages.push({ user: 'Tú', text: this.newMessage });
+                this.messages.push({ username: 'Tú', avatar: '/public/avatars/image-amyrobson.png', date: 'Now', message: this.newMessage, fromUser: true });
                 this.saveMessages();
+
+                if (!this.firstResponseTriggered) {
+                    this.triggerFirstMessage();
+                    this.firstResponseTriggered = true;
+                } else if (this.firstResponseTriggered && !this.secondResponseTriggered) {
+                    this.triggerSecondMessage();
+                    this.secondResponseTriggered = true;
+                } else if (this.firstResponseTriggered && this.secondResponseTriggered && !this.thirdResponseTriggered) {
+                    this.triggerThirdMessage();
+                    this.thirdResponseTriggered = true;
+                }
+
                 this.newMessage = '';
             }
+        },
+        triggerFirstMessage() {
+            this.firstMessage.forEach(msg => this.messages.push({ ...msg, fromUser: false }));
+            this.saveMessages();
+        },
+        triggerSecondMessage() {
+            this.secondMessage.forEach(msg => this.messages.push({ ...msg, fromUser: false }));
+            this.saveMessages();
+        },
+        triggerThirdMessage() {
+            this.thirdMessage.forEach(msg => this.messages.push({ ...msg, fromUser: false }));
+            this.saveMessages();
         },
         saveMessages() {
             localStorage.setItem('chatMessages', JSON.stringify(this.messages));
         },
-        loadMessages() {
-            const savedMessages = localStorage.getItem('chatMessages');
-            if (savedMessages) {
-                this.messages = JSON.parse(savedMessages);
-            }
-        },
-        replyMessage(user) {
-            this.newMessage = `@${user}: `;
+        replyMessage(username) {
+            this.newMessage = `@${username}: `;
             this.$refs.input.focus();
         },
-        editMessage(index, text) {
+        editMessage(index, message) {
             this.editingIndex = index;
-            this.editMessageText = text;
+            this.editMessageText = message;
         },
         saveEditMessage(index) {
             if (this.editMessageText.trim() !== '') {
-                this.messages[index].text = this.editMessageText;
+                this.messages[index].message = this.editMessageText;
                 this.editingIndex = -1;
                 this.editMessageText = '';
                 this.saveMessages();
@@ -60,71 +95,25 @@ export default {
     <div class="content">
         <div>
             <div class="chat-window">
-                <div class="message">
+                <div v-for="(msg, index) in messages" :key="index" class="message">
                     <div class="image-container">
-                        <img src="/public/avatars/image-maxblagun.png" alt="Chrystian" />
+                        <img :src="msg.avatar" :alt="msg.username" />
                     </div>
                     <div class="message-info">
                         <div class="message-header">
-                            Chrystian <p class="date">1 week ago</p>
-                            <button class="reply" @click="replyMessage('Chrystian')">Reply</button>
+                            {{ msg.username }} <p class="date">{{ msg.date }}</p>
+                            <button class="reply" @click="replyMessage(msg.username)" v-if="!msg.fromUser">Reply</button>
+                            <button class="edit" @click="editMessage(index, msg.message)" v-if="msg.username === 'Tú'">Edit</button>
+                            <button class="remove" @click="deleteMessage(index)" v-if="msg.username === 'Tú'">Delete</button>
                         </div>
                         <div class="message-body">
-                            ¡Hola! ¿Cómo estás?
-                        </div>
-                    </div>
-                </div>
-
-                <div class="message">
-                    <div class="image-container">
-                        <img src="/public/avatars/image-ramsesmiron.png" alt="Miller" />
-                    </div>
-                    <div class="message-info">
-                        <div class="message-header">
-                            Miller <p class="date">1 week ago</p>
-                            <button class="reply" @click="replyMessage('Miller')">Reply</button>
-                        </div>
-                        <div class="message-body">
-                            ¡Hola! Todo bien, ¿y tú?
-                        </div>
-                    </div>
-                </div>
-
-                <div class="message">
-                    <div class="image-container">
-                        <img src="/public/avatars/image-ramsesmiron.png" alt="Miller" />
-                    </div>
-                    <div class="message-info">
-                        <div class="message-header">
-                            Miller <p class="date">1 week ago</p>
-                            <button class="reply" @click="replyMessage('Miller')">Reply</button>
-                        </div>
-                        <div class="message-body">
-                            La tarea de hoy es terminar el chat.
-                        </div>
-                    </div>
-                </div>
-
-                <div v-for="(msg, index) in messages" :key="index" class="message-me">
-                    <div class="image-container">
-                        <img src="/public/avatars/image-amyrobson.png" alt="user" />
-                    </div>
-                    <div class="message-info">
-                        <div v-if="editingIndex === index">
-                            <div class="message-header">
+                            <div v-if="editingIndex === index">
                                 <input v-model="editMessageText" />
                                 <button class="save" @click="saveEditMessage(index)">Save</button>
                                 <button class="cancel" @click="cancelEditMessage()">Cancel</button>
                             </div>
-                        </div>
-                        <div v-else>
-                            <div class="message-header">
-                                Tú <p class="date">Now</p>
-                                <button class="edit" @click="editMessage(index, msg.text)">Editar</button>
-                                <button class="remove" @click="deleteMessage(index)">Delete</button>
-                            </div>
-                            <div class="message-body">
-                                <p class="text">{{ msg.user }}: {{ msg.text }}</p>
+                            <div v-else>
+                                {{ msg.message }}
                             </div>
                         </div>
                     </div>
@@ -144,12 +133,12 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin: 50px 0 50px 0;
 }
 
 .chat-window {
-    width: 500px;
-    height: auto;
-    padding: 10px;
+    width: 545px;
+    height: 400px;
     margin-bottom: 10px;
     overflow-y: auto;
 }
@@ -162,18 +151,6 @@ export default {
     border-radius: 5px;
     width: auto;
     height: auto;
-    display: flex;
-}
-
-.message-me {
-    margin-bottom: 10px;
-    box-sizing: border-box;
-    background-color: #fff;
-    color: black;
-    border-radius: 5px;
-    width: auto;
-    height: auto;
-    margin-left: 30px;
     display: flex;
 }
 
@@ -283,11 +260,11 @@ p.date {
     height: 25px;
 }
 
-.text{
+.text {
     color: black;
 }
 
-.image-input{
+.image-input {
     margin-right: 10px;
 }
 </style>
